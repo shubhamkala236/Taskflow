@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'api/**'
+      - 'TaskFlow.Api/**'
 
   workflow_dispatch:
 
