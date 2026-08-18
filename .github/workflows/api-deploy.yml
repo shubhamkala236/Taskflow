@@ -1,9 +1,11 @@
-name: Deploy TaskFlow API
+name: Deploy .NET API
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'TaskFlow.Api/**'
 
 jobs:
   build-and-deploy:
@@ -19,17 +21,12 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore TaskFlow.Api/TaskFlow.Api.csproj
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build TaskFlow.Api/TaskFlow.Api.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish --configuration Release --no-build --output ./publish
+        run: dotnet publish TaskFlow.Api/TaskFlow.Api.csproj --configuration Release --output ./publish
 
-      - name: Deploy to Azure
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: taskflow-api-shubham
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./publish
+      # Azure deployment step here
