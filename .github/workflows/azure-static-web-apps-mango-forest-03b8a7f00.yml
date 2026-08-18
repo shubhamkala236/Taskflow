@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'taskflow-web/**'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -41,7 +43,7 @@ jobs:
           action: upload
           app_location: "./taskflow-web/dist/taskflow-web/browser"
           skip_app_build: true
-          
+
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
