@@ -24,9 +24,9 @@ namespace TaskFlow.Api.Controllers
 		}
 
 		[HttpGet(Name = "Hello")]
-		public IActionResult GetHello()
+		public string GetHello()
 		{
-			return Ok("Hello World!");
+			return "Hello World!";
 		}
 	}
 }
