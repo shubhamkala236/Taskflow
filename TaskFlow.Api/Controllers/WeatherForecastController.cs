@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace TaskFlow.Api.Controllers
 {
 	[ApiController]
-	[Route("[controller]")]
+	[Route("[controller]/[action]")]
 	public class WeatherForecastController : ControllerBase
 	{
 		private static readonly string[] Summaries =
@@ -11,8 +11,8 @@ namespace TaskFlow.Api.Controllers
 			"Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 		];
 
-		[HttpGet(Name = "GetWeatherForecast")]
-		public IEnumerable<WeatherForecast> Get()
+		[HttpGet]
+		public IEnumerable<WeatherForecast> Weather()
 		{
 			return Enumerable.Range(1, 5).Select(index => new WeatherForecast
 			{
@@ -23,8 +23,8 @@ namespace TaskFlow.Api.Controllers
 			.ToArray();
 		}
 
-		[HttpGet(Name = "Hello")]
-		public string GetHello()
+		[HttpGet]
+		public string Hello()
 		{
 			return "Hello World!";
 		}
