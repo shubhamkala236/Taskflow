@@ -29,13 +29,13 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore ./TaskFlow.Api/TaskFlow.Api.csproj
+        run: dotnet restore TaskFlow.Api/TaskFlow.Api.csproj
 
       - name: Build
-        run: dotnet build ./TaskFlow.Api/TaskFlow.Api.csproj --configuration Release --no-restore
+        run: dotnet build TaskFlow.Api/TaskFlow.Api.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish ./TaskFlow.Api/TaskFlow.Api.csproj \
+        run: dotnet publish TaskFlow.Api/TaskFlow.Api.csproj \
           --configuration Release \
           --output ./publish \
           --no-build
