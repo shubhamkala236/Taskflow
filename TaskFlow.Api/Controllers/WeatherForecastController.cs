@@ -22,5 +22,11 @@ namespace TaskFlow.Api.Controllers
 			})
 			.ToArray();
 		}
+
+		[HttpGet(Name = "Hello")]
+		public IActionResult GetHello()
+		{
+			return Ok("Hello World!");
+		}
 	}
 }
