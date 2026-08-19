@@ -4,7 +4,7 @@ namespace TaskFlow.Api.Controllers
 {
 	[ApiController]
 	[Route("[controller]/[action]")]
-	public class WeatherForecastController : ControllerBase
+	public class WeatherForecastController(IConfiguration configuration) : ControllerBase
 	{
 		private static readonly string[] Summaries =
 		[
@@ -26,7 +26,7 @@ namespace TaskFlow.Api.Controllers
 		[HttpGet]
 		public string Hello()
 		{
-			return "Hello World!";
+			return configuration["Greeting:Message"] ?? "Hello World!";
 		}
 	}
 }
