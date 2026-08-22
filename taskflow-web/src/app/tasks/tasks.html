@@ -1,0 +1,48 @@
+<main class="tasks">
+  <h1>TaskFlow</h1>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <form class="create-form" (submit)="$event.preventDefault(); createTask(titleInput, descriptionInput)">
+    <input #titleInput type="text" placeholder="Task title" required />
+    <input #descriptionInput type="text" placeholder="Description (optional)" />
+    <button type="submit">Add Task</button>
+  </form>
+
+  @if (loading()) {
+    <p>Loading tasks…</p>
+  } @else if (tasks().length === 0) {
+    <p>No tasks yet — add one above.</p>
+  } @else {
+    <ul class="task-list">
+      @for (task of tasks(); track task.id) {
+        <li class="task" [class.complete]="task.isComplete">
+          <div class="task-header">
+            <input type="checkbox" [checked]="task.isComplete" (change)="toggleComplete(task)" />
+            <span class="title">{{ task.title }}</span>
+            <button type="button" (click)="deleteTask(task)">Delete</button>
+          </div>
+
+          @if (task.description) {
+            <p class="description">{{ task.description }}</p>
+          }
+
+          @if (task.attachments.length > 0) {
+            <div class="attachments">
+              @for (attachment of task.attachments; track attachment.id) {
+                <span class="attachment">📎 {{ attachment.fileName }}</span>
+              }
+            </div>
+          }
+
+          <label class="upload">
+            <span>{{ uploadingTaskId() === task.id ? 'Uploading…' : 'Attach file' }}</span>
+            <input type="file" (change)="onFileSelected(task, $event)" [disabled]="uploadingTaskId() === task.id" />
+          </label>
+        </li>
+      }
+    </ul>
+  }
+</main>

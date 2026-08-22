@@ -1,4 +1,9 @@
+using Azure.Storage.Blobs;
+using Microsoft.Azure.Cosmos;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using TaskFlow.Api.Data;
+using TaskFlow.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +26,24 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddDbContext<TaskFlowDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddSingleton(_ => new BlobServiceClient(builder.Configuration["BlobStorage:ConnectionString"]));
+builder.Services.AddScoped<IBlobSasService, BlobSasService>();
+
+builder.Services.AddSingleton(_ => new CosmosClient(builder.Configuration["CosmosDb:ConnectionString"]));
+builder.Services.AddScoped<IActivityLogService, CosmosActivityLogService>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    services.GetRequiredService<TaskFlowDbContext>().Database.Migrate();
+    await services.GetRequiredService<IBlobSasService>().EnsureContainerExistsAsync();
+    await services.GetRequiredService<IActivityLogService>().EnsureDatabaseAndContainerExistsAsync();
+}
 
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
