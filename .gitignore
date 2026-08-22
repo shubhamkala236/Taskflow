@@ -92,3 +92,5 @@ Desktop.ini
 # =========================
 
 docker-compose.override.yml
+**/appsettings.Production.json
+**/appsettings.*.Local.json
