@@ -1,10 +1,7 @@
-using System.Text.Json.Serialization;
-
 namespace TaskFlow.Api.Activity
 {
 	public class ActivityLogEntry
 	{
-		[JsonPropertyName("id")]
 		public string Id { get; set; } = Guid.NewGuid().ToString();
 
 		public string TenantId { get; set; } = string.Empty;

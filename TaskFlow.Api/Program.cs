@@ -34,7 +34,15 @@ builder.Services.AddDbContext<TaskFlowDbContext>(options =>
 builder.Services.AddSingleton(_ => new BlobServiceClient(builder.Configuration["BlobStorage:ConnectionString"]));
 builder.Services.AddScoped<IBlobSasService, BlobSasService>();
 
-builder.Services.AddSingleton(_ => new CosmosClient(builder.Configuration["CosmosDb:ConnectionString"]));
+builder.Services.AddSingleton(_ => new CosmosClient(
+    builder.Configuration["CosmosDb:ConnectionString"],
+    new CosmosClientOptions
+    {
+        SerializerOptions = new CosmosSerializationOptions
+        {
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+        }
+    }));
 builder.Services.AddScoped<IActivityLogService, CosmosActivityLogService>();
 
 var app = builder.Build();
