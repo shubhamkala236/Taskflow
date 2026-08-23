@@ -27,7 +27,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<TaskFlowDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("Default"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddSingleton(_ => new BlobServiceClient(builder.Configuration["BlobStorage:ConnectionString"]));
 builder.Services.AddScoped<IBlobSasService, BlobSasService>();
