@@ -14,7 +14,8 @@ namespace TaskFlow.Api.Controllers
 	public class TasksController(
 		TaskFlowDbContext db,
 		IBlobSasService blobSasService,
-		IActivityLogService activityLogService) : ControllerBase
+		IActivityLogService activityLogService,
+		ILogger<TasksController> logger) : ControllerBase
 	{
 		[HttpGet]
 		public async Task<ActionResult<IReadOnlyList<TaskDto>>> GetTasks(CancellationToken cancellationToken)
@@ -60,7 +61,7 @@ namespace TaskFlow.Api.Controllers
 			db.Tasks.Add(task);
 			await db.SaveChangesAsync(cancellationToken);
 
-			await activityLogService.LogAsync(new ActivityLogEntry
+			await TryLogActivityAsync(new ActivityLogEntry
 			{
 				TenantId = TenantContext.CurrentTenantId,
 				TaskItemId = task.Id.ToString(),
@@ -89,7 +90,7 @@ namespace TaskFlow.Api.Controllers
 			task.IsComplete = request.IsComplete;
 			await db.SaveChangesAsync(cancellationToken);
 
-			await activityLogService.LogAsync(new ActivityLogEntry
+			await TryLogActivityAsync(new ActivityLogEntry
 			{
 				TenantId = TenantContext.CurrentTenantId,
 				TaskItemId = task.Id.ToString(),
@@ -114,7 +115,7 @@ namespace TaskFlow.Api.Controllers
 			db.Tasks.Remove(task);
 			await db.SaveChangesAsync(cancellationToken);
 
-			await activityLogService.LogAsync(new ActivityLogEntry
+			await TryLogActivityAsync(new ActivityLogEntry
 			{
 				TenantId = TenantContext.CurrentTenantId,
 				TaskItemId = id.ToString(),
@@ -175,7 +176,7 @@ namespace TaskFlow.Api.Controllers
 			attachment.Confirmed = true;
 			await db.SaveChangesAsync(cancellationToken);
 
-			await activityLogService.LogAsync(new ActivityLogEntry
+			await TryLogActivityAsync(new ActivityLogEntry
 			{
 				TenantId = TenantContext.CurrentTenantId,
 				TaskItemId = id.ToString(),
@@ -195,6 +196,18 @@ namespace TaskFlow.Api.Controllers
 				.ToListAsync(cancellationToken);
 
 			return Ok(attachments);
+		}
+
+		private async Task TryLogActivityAsync(ActivityLogEntry entry, CancellationToken cancellationToken)
+		{
+			try
+			{
+				await activityLogService.LogAsync(entry, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Failed to write activity log entry {Action} for task {TaskItemId}", entry.Action, entry.TaskItemId);
+			}
 		}
 
 		private static TaskDto ToDto(TaskItem task) => new(
