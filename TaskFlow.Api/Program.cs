@@ -1,9 +1,12 @@
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
 using Scalar.AspNetCore;
 using TaskFlow.Api.Data;
 using TaskFlow.Api.Services;
+using TaskFlow.Api.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,12 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 
 const string AllowSwaPolicy = "AllowSwa";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -63,6 +72,7 @@ app.UseHttpsRedirection();
 
 app.UseCors(AllowSwaPolicy);
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

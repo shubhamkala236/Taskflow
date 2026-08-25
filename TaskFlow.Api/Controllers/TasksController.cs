@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web.Resource;
 using TaskFlow.Api.Activity;
 using TaskFlow.Api.Data;
 using TaskFlow.Api.Dtos;
@@ -11,17 +13,20 @@ namespace TaskFlow.Api.Controllers
 {
 	[ApiController]
 	[Route("api/tasks")]
+	[Authorize]
+	[RequiredScope("Tasks.ReadWrite")]
 	public class TasksController(
 		TaskFlowDbContext db,
 		IBlobSasService blobSasService,
 		IActivityLogService activityLogService,
+		ITenantProvider tenantProvider,
 		ILogger<TasksController> logger) : ControllerBase
 	{
 		[HttpGet]
 		public async Task<ActionResult<IReadOnlyList<TaskDto>>> GetTasks(CancellationToken cancellationToken)
 		{
 			var tasks = await db.Tasks
-				.Where(t => t.TenantId == TenantContext.CurrentTenantId)
+				.Where(t => t.TenantId == tenantProvider.TenantId)
 				.Include(t => t.Attachments.Where(a => a.Confirmed))
 				.OrderByDescending(t => t.CreatedAt)
 				.ToListAsync(cancellationToken);
@@ -33,7 +38,7 @@ namespace TaskFlow.Api.Controllers
 		public async Task<ActionResult<TaskDto>> GetTask(Guid id, CancellationToken cancellationToken)
 		{
 			var task = await db.Tasks
-				.Where(t => t.TenantId == TenantContext.CurrentTenantId && t.Id == id)
+				.Where(t => t.TenantId == tenantProvider.TenantId && t.Id == id)
 				.Include(t => t.Attachments.Where(a => a.Confirmed))
 				.FirstOrDefaultAsync(cancellationToken);
 
@@ -51,7 +56,7 @@ namespace TaskFlow.Api.Controllers
 			var task = new TaskItem
 			{
 				Id = Guid.NewGuid(),
-				TenantId = TenantContext.CurrentTenantId,
+				TenantId = tenantProvider.TenantId,
 				Title = request.Title,
 				Description = request.Description,
 				IsComplete = false,
@@ -63,7 +68,7 @@ namespace TaskFlow.Api.Controllers
 
 			await TryLogActivityAsync(new ActivityLogEntry
 			{
-				TenantId = TenantContext.CurrentTenantId,
+				TenantId = tenantProvider.TenantId,
 				TaskItemId = task.Id.ToString(),
 				Action = "TaskCreated",
 				Details = task.Title
@@ -76,7 +81,7 @@ namespace TaskFlow.Api.Controllers
 		public async Task<ActionResult<TaskDto>> UpdateTask(Guid id, UpdateTaskRequest request, CancellationToken cancellationToken)
 		{
 			var task = await db.Tasks
-				.Where(t => t.TenantId == TenantContext.CurrentTenantId && t.Id == id)
+				.Where(t => t.TenantId == tenantProvider.TenantId && t.Id == id)
 				.Include(t => t.Attachments.Where(a => a.Confirmed))
 				.FirstOrDefaultAsync(cancellationToken);
 
@@ -92,7 +97,7 @@ namespace TaskFlow.Api.Controllers
 
 			await TryLogActivityAsync(new ActivityLogEntry
 			{
-				TenantId = TenantContext.CurrentTenantId,
+				TenantId = tenantProvider.TenantId,
 				TaskItemId = task.Id.ToString(),
 				Action = "TaskUpdated",
 				Details = task.Title
@@ -102,10 +107,11 @@ namespace TaskFlow.Api.Controllers
 		}
 
 		[HttpDelete("{id:guid}")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> DeleteTask(Guid id, CancellationToken cancellationToken)
 		{
 			var task = await db.Tasks
-				.FirstOrDefaultAsync(t => t.TenantId == TenantContext.CurrentTenantId && t.Id == id, cancellationToken);
+				.FirstOrDefaultAsync(t => t.TenantId == tenantProvider.TenantId && t.Id == id, cancellationToken);
 
 			if (task is null)
 			{
@@ -117,7 +123,7 @@ namespace TaskFlow.Api.Controllers
 
 			await TryLogActivityAsync(new ActivityLogEntry
 			{
-				TenantId = TenantContext.CurrentTenantId,
+				TenantId = tenantProvider.TenantId,
 				TaskItemId = id.ToString(),
 				Action = "TaskDeleted",
 				Details = task.Title
@@ -133,7 +139,7 @@ namespace TaskFlow.Api.Controllers
 			CancellationToken cancellationToken)
 		{
 			var taskExists = await db.Tasks
-				.AnyAsync(t => t.TenantId == TenantContext.CurrentTenantId && t.Id == id, cancellationToken);
+				.AnyAsync(t => t.TenantId == tenantProvider.TenantId && t.Id == id, cancellationToken);
 
 			if (!taskExists)
 			{
@@ -178,7 +184,7 @@ namespace TaskFlow.Api.Controllers
 
 			await TryLogActivityAsync(new ActivityLogEntry
 			{
-				TenantId = TenantContext.CurrentTenantId,
+				TenantId = tenantProvider.TenantId,
 				TaskItemId = id.ToString(),
 				Action = "AttachmentUploaded",
 				Details = attachment.FileName

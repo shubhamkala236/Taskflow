@@ -1,1 +1,8 @@
+@if (activeAccount(); as account) {
+  <header class="app-header">
+    <span class="user">{{ account.name }}</span>
+    <button type="button" (click)="logout()">Sign out</button>
+  </header>
+}
+
 <router-outlet />
