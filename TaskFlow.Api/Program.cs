@@ -84,6 +84,16 @@ app.MapScalarApiReference();
 
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    var refresherProvider = context.RequestServices.GetRequiredService<IConfigurationRefresherProvider>();
+    foreach (var refresher in refresherProvider.Refreshers)
+    {
+        await refresher.TryRefreshAsync();
+    }
+    await next();
+});
+
 app.UseCors(AllowSwaPolicy);
 
 app.UseAuthentication();
