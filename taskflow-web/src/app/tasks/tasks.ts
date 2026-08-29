@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { TasksService } from './tasks.service';
 import { TaskItem } from './task.model';
+import { FeatureFlagsService } from '../features/feature-flags.service';
 
 @Component({
   selector: 'app-tasks',
@@ -11,14 +12,20 @@ import { TaskItem } from './task.model';
 })
 export class Tasks implements OnInit {
   private readonly tasksService = inject(TasksService);
+  private readonly featureFlagsService = inject(FeatureFlagsService);
 
   protected readonly tasks = signal<TaskItem[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly uploadingTaskId = signal<string | null>(null);
+  protected readonly attachmentsEnabled = signal(false);
 
   ngOnInit(): void {
     this.loadTasks();
+    this.featureFlagsService.getFeatures().subscribe({
+      next: (flags) => this.attachmentsEnabled.set(flags.attachments),
+      error: () => this.attachmentsEnabled.set(false)
+    });
   }
 
   loadTasks(): void {

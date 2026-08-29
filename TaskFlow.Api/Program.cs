@@ -1,7 +1,10 @@
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
+using Microsoft.FeatureManagement;
 using Microsoft.Identity.Web;
 using Scalar.AspNetCore;
 using TaskFlow.Api.Data;
@@ -11,6 +14,17 @@ using TaskFlow.Api.Tenancy;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    options.Connect(new Uri(builder.Configuration["AppConfig:Endpoint"]!), new DefaultAzureCredential())
+        .UseFeatureFlags(featureFlagOptions =>
+        {
+            featureFlagOptions.SetRefreshInterval(TimeSpan.FromSeconds(30));
+        });
+});
+builder.Services.AddAzureAppConfiguration();
+builder.Services.AddFeatureManagement();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -76,6 +90,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/api/features", async (IFeatureManager featureManager) =>
+    Results.Ok(new { attachments = await featureManager.IsEnabledAsync("Attachments") }))
+    .RequireAuthorization();
 
 app.MapHealthChecks("/healthz");
 

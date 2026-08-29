@@ -37,10 +37,12 @@
             </div>
           }
 
-          <label class="upload">
-            <span>{{ uploadingTaskId() === task.id ? 'Uploading…' : 'Attach file' }}</span>
-            <input type="file" (change)="onFileSelected(task, $event)" [disabled]="uploadingTaskId() === task.id" />
-          </label>
+          @if (attachmentsEnabled()) {
+            <label class="upload">
+              <span>{{ uploadingTaskId() === task.id ? 'Uploading…' : 'Attach file' }}</span>
+              <input type="file" (change)="onFileSelected(task, $event)" [disabled]="uploadingTaskId() === task.id" />
+            </label>
+          }
         </li>
       }
     </ul>
